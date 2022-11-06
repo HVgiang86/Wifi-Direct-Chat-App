@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Wifi Direct Chat App</string>
+    <string name="connection_status">Connection Status</string>
+    <string name="turn_wifi_on">Turn Wifi On</string>
+    <string name="turn_wifi_off">Turn Wifi Off</string>
+    <string name="device_discovery">Peers Discovery</string>
+    <string name="peers_list_label">Peers List</string>
+    <string name="disconnected">disconnected</string>
+    <string name="connected">connected</string>
 </resources>
