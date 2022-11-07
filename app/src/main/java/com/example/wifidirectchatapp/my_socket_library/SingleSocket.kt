@@ -3,7 +3,6 @@
 package com.example.wifidirectchatapp.my_socket_library
 
 import android.os.AsyncTask
-import com.example.wifidirectchatapp.my_socket_library.IO.OnDisconnectListener
 import com.example.wifidirectchatapp.my_socket_library.async_task.ReadAsyncTask
 import com.example.wifidirectchatapp.my_socket_library.async_task.WriteAsyncTask
 import com.example.wifidirectchatapp.my_socket_library.model.MessagePacket
@@ -22,10 +21,11 @@ abstract class SingleSocket {
         async.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, strings);
     }*/
     var socket: Socket? = null
-    var onConnectListener: IO.OnConnectListener? = null
+
 
     @JvmField
-    var disconnectListener: OnDisconnectListener? = null
+    var onConnectListener: IO.OnConnectListener? = null
+    var onDisconnectListener: IO.OnDisconnectListener? = null
     var newMessageListener: IO.OnNewMessageListener? = null
     fun createSocket(port: Int) {
         socket = Socket()
@@ -41,7 +41,7 @@ abstract class SingleSocket {
         readAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
     }
 
-    private fun emit(MessagePacket: MessagePacket?) {
+    fun emit(MessagePacket: MessagePacket?) {
         val writeAsyncTask = WriteAsyncTask(socket!!)
         writeAsyncTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, MessagePacket)
     }
