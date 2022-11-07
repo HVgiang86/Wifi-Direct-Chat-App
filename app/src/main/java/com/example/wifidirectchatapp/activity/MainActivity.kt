@@ -6,34 +6,38 @@ import android.content.Context
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
+import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
+import android.net.wifi.p2p.WifiP2pInfo
 import android.net.wifi.p2p.WifiP2pManager
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.core.app.ActivityCompat
 import android.util.Log
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.ListView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import com.example.wifidirectchatapp.R
 import com.example.wifidirectchatapp.broadcast_receiver.WifiP2pReceiver
+import com.example.wifidirectchatapp.utilities.WifiP2pHelper
 
 @Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
     private val PERMISSION_REQUEST_CODE = 1000
-    private lateinit var manager : WifiP2pManager
-    private lateinit var channel : WifiP2pManager.Channel
-    private lateinit var wifiManager : WifiManager
-    private lateinit var wifiToggleBtn : Button
-    private lateinit var peerDiscoveryBtn : Button
-    private lateinit var connectionStateTv : TextView
-    private lateinit var peersListView : ListView
+
+    private lateinit var manager: WifiP2pManager
+    private lateinit var channel: WifiP2pManager.Channel
+
+    private lateinit var wifiManager: WifiManager
+    private lateinit var wifiToggleBtn: Button
+    private lateinit var peerDiscoveryBtn: Button
+    lateinit var connectionStateTv: TextView
+    private lateinit var peersListView: ListView
+
     private lateinit var receiver: WifiP2pReceiver
+
     private val TAG = "P2P TAG"
-    private lateinit var peers : MutableList<WifiP2pDevice>
-    private lateinit var deviceName : Array<String>
+
+    private lateinit var peers: MutableList<WifiP2pDevice>
+    private lateinit var deviceName: Array<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,14 +50,11 @@ class MainActivity : AppCompatActivity() {
 
         wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
-
         if (wifiManager.isWifiEnabled) {
             Log.d(TAG, "Wifi enabled!")
             connectionStateTv.text = getString(R.string.connected)
             wifiToggleBtn.text = getString(R.string.turn_wifi_off)
-        }
-        else
-        {
+        } else {
             Log.d(TAG, "Wifi disabled!")
             connectionStateTv.text = getString(R.string.disconnected)
             wifiToggleBtn.text = getString(R.string.turn_wifi_on)
@@ -64,15 +65,15 @@ class MainActivity : AppCompatActivity() {
 
         manager = getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
         channel = manager.initialize(this, mainLooper, null)
-        receiver = WifiP2pReceiver(manager,channel, this)
+        receiver = WifiP2pReceiver(manager, channel, this)
         registryBroadcastReceiver()
     }
+
     private fun changeWifiState() {
         if (wifiToggleBtn.text.equals(getString(R.string.turn_wifi_off))) {
             wifiManager.isWifiEnabled = false
             wifiToggleBtn.text = getString(R.string.turn_wifi_on)
-        }
-        else {
+        } else {
             wifiManager.isWifiEnabled = true
             wifiToggleBtn.text = getString(R.string.turn_wifi_off)
         }
@@ -80,26 +81,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     private fun permissionCheck() {
 
-        val permission = arrayOf(Manifest.permission.INTERNET,Manifest.permission.ACCESS_WIFI_STATE,
+        val permission = arrayOf(
+            Manifest.permission.INTERNET, Manifest.permission.ACCESS_WIFI_STATE,
             Manifest.permission.CHANGE_WIFI_STATE,
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
         )
         if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED ||
-                    ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION
-                    ) != PackageManager.PERMISSION_GRANTED
+                this, Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(this, permission, PERMISSION_REQUEST_CODE)
         }
@@ -116,7 +115,7 @@ class MainActivity : AppCompatActivity() {
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
-        baseContext.registerReceiver(receiver,intentFilter)
+        baseContext.registerReceiver(receiver, intentFilter)
     }
 
     @SuppressLint("MissingPermission")
@@ -130,28 +129,60 @@ class MainActivity : AppCompatActivity() {
 
             override fun onFailure(p0: Int) {
                 //discovery not started
-                connectionStateTv.text = "Peers discovery starting failed, pls check the connection!"
+                connectionStateTv.text =
+                    "Peers discovery starting failed, pls check the connection!"
             }
         })
     }
 
     val peerListListener = WifiP2pManager.PeerListListener { p0 ->
-        var peersList = p0!!.deviceList
-        if (!peersList.equals(peers)) {
-            peers.clear()
-            peers.addAll(peersList)
+        val peersList = p0!!.deviceList
+        if (!peersList.equals(WifiP2pHelper.peers)) {
+            WifiP2pHelper.peers.clear()
+            WifiP2pHelper.peers.addAll(peersList)
 
-            if (peers.size == 0)
-                Toast.makeText(this, "No device found!", Toast.LENGTH_SHORT).show()
-            else
-            {
+            if (WifiP2pHelper.peers.size == 0) Toast.makeText(
+                this, "No device found!", Toast.LENGTH_SHORT
+            ).show()
+            else {
                 var i = 0
-                peers.forEach {d -> deviceName[i++] = d.deviceName
-                Log.d(TAG,"Device name: " + d.deviceName)}
-                var adapter = ArrayAdapter(applicationContext, android.R.layout.simple_list_item_1, deviceName)
+                WifiP2pHelper.peers.forEach { d ->
+                    deviceName[i++] = d.deviceName
+                    Log.d(TAG, "Device name: " + d.deviceName)
+                }
+                val adapter = ArrayAdapter(
+                    applicationContext, android.R.layout.simple_list_item_1, deviceName
+                )
                 peersListView.adapter = adapter
+                peersListView.onItemClickListener = onItemClickListener
             }
         }
     }
 
+    @SuppressLint("MissingPermission")
+    val onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+        val device = peers[position]
+        val config = WifiP2pConfig()
+        config.deviceAddress = device.deviceAddress
+        manager.connect(channel, config, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                Toast.makeText(applicationContext,"Connected to " + device.deviceName,Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onFailure(p0: Int) {
+                Toast.makeText(applicationContext,"not connected!",Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
+    val connectionInfoListener = WifiP2pManager.ConnectionInfoListener {
+        wifiP2pInfo ->  
+        val groupOwnerAddress = wifiP2pInfo.groupOwnerAddress
+
+        if (wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner)
+            connectionStateTv.text = "HOST"
+        else
+            connectionStateTv.text = "CLIENT"
+
+    }
 }
