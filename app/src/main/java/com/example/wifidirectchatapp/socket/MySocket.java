@@ -1,4 +1,7 @@
 package com.example.wifidirectchatapp.socket;
 
-public class MySocket {
+import com.example.wifidirectchatapp.my_socket_library.SingleSocket;
+
+public class MySocket extends SingleSocket {
+
 }
