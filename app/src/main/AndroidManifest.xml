@@ -5,9 +5,7 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission
-        android:name="android.permission.NEARBY_WIFI_DEVICES"
-        android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
@@ -21,6 +19,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.WifiDirectChatApp"
         tools:targetApi="31">
+
         <activity
             android:name=".activity.MainActivity"
             android:exported="true">
@@ -34,6 +33,17 @@
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
+
+        <receiver android:name=".broadcast_receiver.WifiP2pReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION"/>
+                <action android:name="WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION"/>
+                <action android:name="WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION"/>
+                <action android:name="WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
