@@ -14,6 +14,8 @@ import android.view.View
 import android.widget.Toast
 import android.widget.TextView
 import com.example.wifidirectchatapp.model.Message
+import com.example.wifidirectchatapp.utilities.FileOpener
+import java.io.File
 
 class MessageAdapter(private val messageList: List<Message>, private val context: Context) :
     RecyclerView.Adapter<MessageAdapter.ViewHolder>() {
@@ -66,23 +68,26 @@ class MessageAdapter(private val messageList: List<Message>, private val context
     }
 
     private fun showFileChooser(filePath: String) {
-        val extension = filePath.substring(filePath.lastIndexOf(".") + 1)
-        val type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-        val baseIntent = Intent(Intent.ACTION_VIEW, Uri.parse(filePath))
-        baseIntent.type = type
-        val i = filePath.lastIndexOf("/")
-        val selectedUri = Uri.parse(filePath.substring(0, i))
-        Log.d("Adapter Log", "test path: $selectedUri")
-        val intent = Intent(Intent.ACTION_VIEW)
-        intent.setDataAndType(selectedUri, "*/*")
-        if (intent.resolveActivityInfo(context.packageManager, 0) != null) {
-            context.startActivity(intent)
-        } else {
-            // if you reach this place, it means there is no any file
-            // explorer app installed on your device
-            Toast.makeText(context.applicationContext, "File unable to open", Toast.LENGTH_LONG)
-                .show()
-        }
+        val file = File(filePath)
+        FileOpener.openFile(context,file)
+
+//        val extension = filePath.substring(filePath.lastIndexOf(".") + 1)
+//        val type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+//        val baseIntent = Intent(Intent.ACTION_VIEW, Uri.parse(filePath))
+//        baseIntent.type = type
+//        val i = filePath.lastIndexOf("/")
+//        val selectedUri = Uri.parse(filePath.substring(0, i))
+//        Log.d("Adapter Log", "test path: $selectedUri")
+//        val intent = Intent(Intent.ACTION_VIEW)
+//        intent.setDataAndType(selectedUri, "*/*")
+//        if (intent.resolveActivityInfo(context.packageManager, 0) != null) {
+//            context.startActivity(intent)
+//        } else {
+//            // if you reach this place, it means there is no any file
+//            // explorer app installed on your device
+//            Toast.makeText(context.applicationContext, "File unable to open", Toast.LENGTH_LONG)
+//                .show()
+//        }
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
