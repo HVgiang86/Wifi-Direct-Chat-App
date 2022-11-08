@@ -11,9 +11,10 @@ import java.net.ServerSocket
 import java.net.SocketException
 
 class Server private constructor() {
-    private var connectedSocket: MySocket? = null
-    private var hasClientConnected = false
+    var connectedSocket: MySocket? = null
+    var hasClientConnected = false
     private var serverSocket: ServerSocket? = null
+
     fun createServer(port: Int) {
         val socketServerThread = Thread(SocketServerThread(port))
         socketServerThread.start()

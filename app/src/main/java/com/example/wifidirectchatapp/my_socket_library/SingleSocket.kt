@@ -4,6 +4,7 @@ package com.example.wifidirectchatapp.my_socket_library
 
 import android.os.AsyncTask
 import com.example.wifidirectchatapp.my_socket_library.async_task.ReadAsyncTask
+import com.example.wifidirectchatapp.my_socket_library.async_task.SocketConnectAsyncTask
 import com.example.wifidirectchatapp.my_socket_library.async_task.WriteAsyncTask
 import com.example.wifidirectchatapp.my_socket_library.model.MessagePacket
 import com.example.wifidirectchatapp.my_socket_library.model.MessagePacketBuilder
@@ -12,14 +13,11 @@ import java.net.InetSocketAddress
 import java.net.Socket
 
 abstract class SingleSocket {
-    /*public void connectSocket(Context context, String ip, String port) {
-        WeakReference<Context> contextWeakReference = new WeakReference<>(context);
-        SocketConnectAsync async = new SocketConnectAsync(this, contextWeakReference);
-        String[] strings = new String[2];
-        strings[0] = ip;
-        strings[1] = port;
-        async.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, strings);
-    }*/
+
+    fun connectSocket(ip: String, port: String) {
+        val socketConnectAsyncTask = SocketConnectAsyncTask(this)
+        socketConnectAsyncTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR,ip,port)
+    }
     var socket: Socket? = null
 
 

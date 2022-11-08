@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "P2P TAG"
 
     private lateinit var peers: MutableList<WifiP2pDevice>
-    private var deviceName = Array<String>(5) { "" }
+    private var deviceName = Array(5) { "" }
     private lateinit var adapter: ArrayAdapter<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
         receiver = WifiP2pReceiver(manager, channel, this)
         registryBroadcastReceiver()
 
-        peers = mutableListOf<WifiP2pDevice>()
+        peers = mutableListOf()
 
         adapter = ArrayAdapter(
             applicationContext, android.R.layout.simple_list_item_1, deviceName
@@ -202,12 +202,10 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "Connection Info Listener")
         val groupOwnerAddress = wifiP2pInfo.groupOwnerAddress
 
-        val isHost: Boolean
-        val ip : String
         val intent = Intent(this, ChatActivity::class.java)
         val bundle = Bundle()
 
-        isHost = (wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner)
+        val isHost: Boolean = (wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner)
 
         if (isHost) {
             connectionStateTv.text = "HOST"
@@ -218,7 +216,7 @@ class MainActivity : AppCompatActivity() {
             bundle.putString(ChatActivity.SOCKET_MODE_EXTRA,ChatActivity.CLIENT_SOCKET_MODE)
         }
 
-        ip = groupOwnerAddress.hostAddress as String
+        val ip : String = groupOwnerAddress.hostAddress as String
         if (ip.isNotEmpty()) {
             Log.d(TAG, "Group owner address: ${groupOwnerAddress.hostAddress}")
             bundle.putString(ChatActivity.IP_SOCKET_EXTRA,ip)

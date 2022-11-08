@@ -1,9 +1,7 @@
 package com.example.wifidirectchatapp.socket
 
 class Client private constructor() {
-    init {
-
-    }
+    val socket : MySocket = MySocket()
 
     private object Holder {
         val INSTANCE = Client()
