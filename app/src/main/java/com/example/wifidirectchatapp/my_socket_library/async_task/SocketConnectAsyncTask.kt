@@ -24,7 +24,7 @@ class SocketConnectAsyncTask(private val mSocket: SingleSocket) :
             mSocket.socket?.connect(InetSocketAddress(ip, port!!), 5000)
             Log.d(
                 TAG,
-                "Connected to server! ip: " + mSocket.socket!!.inetAddress + " port: " + mSocket.socket!!.port
+                "Connected to server! ip: " + mSocket.socket?.inetAddress + " port: " + mSocket.socket?.port
             )
         } catch (e: IOException) {
             e.printStackTrace()

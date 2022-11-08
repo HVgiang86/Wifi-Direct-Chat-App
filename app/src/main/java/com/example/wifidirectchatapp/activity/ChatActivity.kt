@@ -88,6 +88,7 @@ class ChatActivity : AppCompatActivity() {
     private fun openClientSocket() {
         Log.d(TAG, "Connecting to socket server: ip: ${ip}; port: $SOCKET_PORT")
         val socket = Client.getInstance().socket
+        socket.createSocket(SOCKET_PORT)
         socket.connectSocket(ip, SOCKET_PORT.toString())
         socket.startReadingStream()
 
