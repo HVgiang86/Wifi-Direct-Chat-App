@@ -1,23 +1,27 @@
 package com.example.wifidirectchatapp.socket
 
 import android.util.Log
-import com.example.wifidirectchatapp.my_socket_library.model.MessagePacketBuilder
 import com.example.wifidirectchatapp.my_socket_library.IO
 import com.example.wifidirectchatapp.my_socket_library.SingleSocket
+import com.example.wifidirectchatapp.my_socket_library.model.MessagePacketBuilder
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
 import java.net.ServerSocket
 import java.net.SocketException
 
-class Server  //Singleton
-private constructor() {
+class Server private constructor() {
     private var connectedSocket: MySocket? = null
     private var hasClientConnected = false
     private var serverSocket: ServerSocket? = null
     fun createServer(port: Int) {
         val socketServerThread = Thread(SocketServerThread(port))
         socketServerThread.start()
+    }
+
+    //singleton pattern
+    private object Holder {
+        val INSTANCE = Server()
     }
 
     fun hasClientConnected(): Boolean {
@@ -76,7 +80,12 @@ private constructor() {
     }
 
     companion object {
-        val instance = Server()
+
+        @JvmStatic
+        fun getInstance(): Server {
+            return Holder.INSTANCE
+        }
+
         private const val TAG = "SERVER TAG"
 
         // TODO Auto-generated catch block

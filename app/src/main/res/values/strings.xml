@@ -7,4 +7,13 @@
     <string name="peers_list_label">Peers List</string>
     <string name="disconnected">disconnected</string>
     <string name="connected">connected</string>
+    <string name="ip_hint">IP</string>
+    <string name="port_hint">Port</string>
+    <string name="connect_btn">Connect</string>
+    <string name="message">Message</string>
+    <string name="send">Send</string>
+    <string name="default_port">3000</string>
+    <string name="default_ip">192.168.0.138</string>
+    <string name="username">username</string>
+    <string name="server_address">Server Address</string>
 </resources>

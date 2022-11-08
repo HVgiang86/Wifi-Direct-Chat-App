@@ -36,11 +36,8 @@ class ReadAsyncTask(private val socket: SingleSocket) : AsyncTask<Void?, Void?, 
                 val event = dis.readLine()
                 builder.setEvent(event)
 
-                //read sender name
-                val sender = dis.readUTF()
-                builder.setSender(sender)
                 Log.d(TAG, "Event: $event")
-                Log.d(TAG, "Sender: $sender")
+
                 if (event.equals(IO.SEND_FILE, ignoreCase = true)) {
                     builder.setType(IO.SEND_FILE)
 
@@ -72,7 +69,7 @@ class ReadAsyncTask(private val socket: SingleSocket) : AsyncTask<Void?, Void?, 
 
                 //if meet disconnect event, finish read task
                 if (messagePacket.event.equals(IO.CLIENT_DISCONNECT, ignoreCase = true)) {
-                    socket.disconnectListener?.onDisconnect(socket)
+                    socket.onDisconnectListener?.onDisconnect(socket)
                     onDestroy()
                     return null
                 }
@@ -88,7 +85,7 @@ class ReadAsyncTask(private val socket: SingleSocket) : AsyncTask<Void?, Void?, 
     private fun onDestroy() {
         try {
             socket.socket?.close()
-            socket.disconnectListener?.onDisconnect(socket)
+            socket.onDisconnectListener?.onDisconnect(socket)
             Log.d("SERVER TAG", "Client disconnected!")
         } catch (e: IOException) {
             e.printStackTrace()

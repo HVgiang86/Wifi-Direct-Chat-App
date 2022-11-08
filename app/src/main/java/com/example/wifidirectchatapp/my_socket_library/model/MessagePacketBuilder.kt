@@ -7,7 +7,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 
 class MessagePacketBuilder {
-    private var sender: String? = null
     private var event: String? = null
     private var isFile = false
     private var message: String? = null
@@ -25,10 +24,6 @@ class MessagePacketBuilder {
     fun setType(type: String) {
         isFile =
             type.equals("file", ignoreCase = true) || type.equals(IO.SEND_FILE, ignoreCase = true)
-    }
-
-    fun setSender(sender: String?) {
-        this.sender = sender
     }
 
     fun setMessage(message: String?) {
@@ -67,8 +62,8 @@ class MessagePacketBuilder {
 
     fun build(): MessagePacket {
         return if (isFile) {
-            MessagePacket(sender!!, event!!, true, message!!, data, dataSizeInByte)
-        } else MessagePacket(sender!!, event!!, false, message!!)
+            MessagePacket(event!!, true, message!!, data, dataSizeInByte)
+        } else MessagePacket(event!!, false, message!!)
     }
 
 }

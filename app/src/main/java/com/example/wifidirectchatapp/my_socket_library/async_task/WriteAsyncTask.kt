@@ -30,33 +30,24 @@ class WriteAsyncTask(private val mSocket: Socket) : AsyncTask<MessagePacket?, Vo
             //write event
             dos.writeBytes(
                 """
-        ${messagePacket?.event}
-        
-        """.trimIndent()
+                ${messagePacket?.event}
+                """.trimIndent()
             )
 
-            //write sender name
-            dos.writeUTF(
-                """
-        ${messagePacket?.sender}
-        
-        """.trimIndent()
-            )
             if (messagePacket!!.isFile) {
                 //write data size in byte
                 dos.writeBytes(
                     """
-        ${messagePacket.dataSizeInByte}
-        
-        """.trimIndent()
+                    ${messagePacket.dataSizeInByte}
+                    """.trimIndent()
                 )
 
                 //write file name
                 dos.writeBytes(
                     """
-        ${messagePacket.message}
-        
-        """.trimIndent()
+                    ${messagePacket.message}
+                    
+                    """.trimIndent()
                 )
 
                 //write data in byte array
@@ -66,9 +57,9 @@ class WriteAsyncTask(private val mSocket: Socket) : AsyncTask<MessagePacket?, Vo
                 //write message
                 dos.writeUTF(
                     """
-        ${messagePacket.message}
-        
-        """.trimIndent()
+                    ${messagePacket.message}
+                    
+                    """.trimIndent()
                 )
                 //                dos.writeBytes(MessagePacket.getMessage() + "\n");
             }

@@ -3,12 +3,12 @@ package com.example.wifidirectchatapp.activity
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
 import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
-import android.net.wifi.p2p.WifiP2pInfo
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Bundle
 import android.util.Log
@@ -17,7 +17,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.wifidirectchatapp.R
 import com.example.wifidirectchatapp.broadcast_receiver.WifiP2pReceiver
-import com.example.wifidirectchatapp.utilities.WifiP2pHelper
 
 @Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
@@ -37,7 +36,8 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "P2P TAG"
 
     private lateinit var peers: MutableList<WifiP2pDevice>
-    private lateinit var deviceName: Array<String>
+    private var deviceName = Array<String>(5) { "" }
+    private lateinit var adapter: ArrayAdapter<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +67,14 @@ class MainActivity : AppCompatActivity() {
         channel = manager.initialize(this, mainLooper, null)
         receiver = WifiP2pReceiver(manager, channel, this)
         registryBroadcastReceiver()
+
+        peers = mutableListOf<WifiP2pDevice>()
+
+        adapter = ArrayAdapter(
+            applicationContext, android.R.layout.simple_list_item_1, deviceName
+        )
+        peersListView.adapter = adapter
+        peersListView.onItemClickListener = onItemClickListener
     }
 
     private fun changeWifiState() {
@@ -77,7 +85,6 @@ class MainActivity : AppCompatActivity() {
             wifiManager.isWifiEnabled = true
             wifiToggleBtn.text = getString(R.string.turn_wifi_off)
         }
-
     }
 
     override fun onRequestPermissionsResult(
@@ -107,6 +114,15 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         baseContext.unregisterReceiver(receiver)
+        manager.stopPeerDiscovery(channel, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                //discovery started successfully
+            }
+
+            override fun onFailure(p0: Int) {
+                //discovery not started
+            }
+        })
     }
 
     private fun registryBroadcastReceiver() {
@@ -137,24 +153,27 @@ class MainActivity : AppCompatActivity() {
 
     val peerListListener = WifiP2pManager.PeerListListener { p0 ->
         val peersList = p0!!.deviceList
-        if (!peersList.equals(WifiP2pHelper.peers)) {
-            WifiP2pHelper.peers.clear()
-            WifiP2pHelper.peers.addAll(peersList)
+        if (peersList.isEmpty()) {
+            Log.d(TAG, "No device found")
+        } else {
+            Log.d(TAG, "${peersList.size} devices found!")
+        }
 
-            if (WifiP2pHelper.peers.size == 0) Toast.makeText(
+        if (!peersList.equals(peers)) {
+            peers.clear()
+            peers.addAll(peersList)
+
+            if (peers.size == 0) Toast.makeText(
                 this, "No device found!", Toast.LENGTH_SHORT
             ).show()
             else {
                 var i = 0
-                WifiP2pHelper.peers.forEach { d ->
+                peers.forEach { d ->
                     deviceName[i++] = d.deviceName
                     Log.d(TAG, "Device name: " + d.deviceName)
                 }
-                val adapter = ArrayAdapter(
-                    applicationContext, android.R.layout.simple_list_item_1, deviceName
-                )
-                peersListView.adapter = adapter
-                peersListView.onItemClickListener = onItemClickListener
+                adapter.notifyDataSetChanged()
+
             }
         }
     }
@@ -166,23 +185,46 @@ class MainActivity : AppCompatActivity() {
         config.deviceAddress = device.deviceAddress
         manager.connect(channel, config, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
-                Toast.makeText(applicationContext,"Connected to " + device.deviceName,Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    applicationContext,
+                    "Connected to " + device.deviceName,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
 
             override fun onFailure(p0: Int) {
-                Toast.makeText(applicationContext,"not connected!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, "not connected!", Toast.LENGTH_SHORT).show()
             }
         })
     }
 
-    val connectionInfoListener = WifiP2pManager.ConnectionInfoListener {
-        wifiP2pInfo ->  
+    val connectionInfoListener = WifiP2pManager.ConnectionInfoListener { wifiP2pInfo ->
+        Log.d(TAG, "Connection Info Listener")
         val groupOwnerAddress = wifiP2pInfo.groupOwnerAddress
 
-        if (wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner)
-            connectionStateTv.text = "HOST"
-        else
-            connectionStateTv.text = "CLIENT"
+        val isHost: Boolean
+        val ip : String
+        val intent = Intent(this, ChatActivity::class.java)
+        val bundle = Bundle()
 
+        isHost = (wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner)
+
+        if (isHost) {
+            connectionStateTv.text = "HOST"
+            bundle.putString(ChatActivity.SOCKET_MODE_EXTRA,ChatActivity.SERVER_SOCKET_MODE)
+        }
+        else {
+            connectionStateTv.text = "CLIENT"
+            bundle.putString(ChatActivity.SOCKET_MODE_EXTRA,ChatActivity.CLIENT_SOCKET_MODE)
+        }
+
+        ip = groupOwnerAddress.hostAddress as String
+        if (ip.isNotEmpty()) {
+            Log.d(TAG, "Group owner address: ${groupOwnerAddress.hostAddress}")
+            bundle.putString(ChatActivity.IP_SOCKET_EXTRA,ip)
+        }
+
+        intent.putExtra(ChatActivity.BUNDLE_KEY,bundle)
+        startActivity(intent)
     }
 }
