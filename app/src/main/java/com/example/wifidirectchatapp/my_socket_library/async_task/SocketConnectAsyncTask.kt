@@ -26,6 +26,9 @@ class SocketConnectAsyncTask(private val mSocket: SingleSocket) :
                 TAG,
                 "Connected to server! ip: " + mSocket.socket?.inetAddress + " port: " + mSocket.socket?.port
             )
+            if (mSocket.socket?.isConnected == true) {
+                mSocket.startReadingStream()
+            }
         } catch (e: IOException) {
             e.printStackTrace()
             Log.d(TAG, "Connected fail!")

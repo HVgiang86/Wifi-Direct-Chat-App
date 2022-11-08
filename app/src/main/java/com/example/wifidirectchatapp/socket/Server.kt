@@ -57,9 +57,9 @@ class Server private constructor() {
                     // Socket object
                     val socket = serverSocket!!.accept()
                     hasClientConnected = true
-                    if (connectedSocket!!.socket !== socket) {
+                    if (connectedSocket?.socket !== socket) {
                         connectedSocket = MySocket()
-                        connectedSocket!!.socket = socket
+                        connectedSocket?.socket = socket
                     }
                     Log.d(
                         TAG, "Client accepted: " + " Socket IP: " + socket.inetAddress
@@ -71,7 +71,7 @@ class Server private constructor() {
                             socket?.onDestroy()
                         }
                     }
-                    connectedSocket!!.startReadingStream()
+                    connectedSocket?.startReadingStream()
                 }
             } catch (e: IOException) {
                 // TODO Auto-generated catch block

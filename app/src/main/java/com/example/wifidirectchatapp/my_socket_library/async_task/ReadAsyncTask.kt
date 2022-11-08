@@ -28,7 +28,8 @@ class ReadAsyncTask(private val socket: SingleSocket) : AsyncTask<Void?, Void?, 
             while (true) {
                 val `is` = socket.socket?.getInputStream()
                 val dis = DataInputStream(`is`)
-                //val br = BufferedReader(InputStreamReader(`is`))
+                val br = BufferedReader(InputStreamReader(`is`))
+                Log.d(TAG, "Read Async Task Running")
                 Log.d(TAG, "New Data")
                 val builder = MessagePacketBuilder()
 

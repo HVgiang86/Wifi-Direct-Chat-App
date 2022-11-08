@@ -28,40 +28,22 @@ class WriteAsyncTask(private val mSocket: Socket) : AsyncTask<MessagePacket?, Vo
             dos.flush()
 
             //write event
-            dos.writeBytes(
-                """
-                ${messagePacket?.event}
-                """.trimIndent()
-            )
+            dos.writeBytes("${messagePacket?.event}" + "\n")
 
             if (messagePacket!!.isFile) {
                 //write data size in byte
-                dos.writeBytes(
-                    """
-                    ${messagePacket.dataSizeInByte}
-                    """.trimIndent()
-                )
+                dos.writeBytes("${messagePacket.dataSizeInByte}" + "\n")
 
                 //write file name
-                dos.writeBytes(
-                    """
-                    ${messagePacket.message}
-                    
-                    """.trimIndent()
-                )
+                dos.writeBytes(messagePacket.message + "\n")
 
                 //write data in byte array
                 val data = messagePacket.data
                 os.write(data, 0, messagePacket.dataSizeInByte)
             } else {
                 //write message
-                dos.writeUTF(
-                    """
-                    ${messagePacket.message}
-                    
-                    """.trimIndent()
-                )
-                //                dos.writeBytes(MessagePacket.getMessage() + "\n");
+                dos.writeUTF(messagePacket.message + "\n")
+                //dos.writeBytes(MessagePacket.getMessage() + "\n");
             }
             Log.d(TAG, "transferred")
         } catch (e: IOException) {

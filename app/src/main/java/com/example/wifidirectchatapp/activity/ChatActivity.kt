@@ -90,7 +90,6 @@ class ChatActivity : AppCompatActivity() {
         val socket = Client.getInstance().socket
         socket.createSocket(SOCKET_PORT)
         socket.connectSocket(ip, SOCKET_PORT.toString())
-        socket.startReadingStream()
 
         socket.newMessageListener = OnNewMessageListener()
     }

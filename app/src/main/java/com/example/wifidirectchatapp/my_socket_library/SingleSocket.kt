@@ -3,6 +3,7 @@
 package com.example.wifidirectchatapp.my_socket_library
 
 import android.os.AsyncTask
+import android.util.Log
 import com.example.wifidirectchatapp.my_socket_library.async_task.ReadAsyncTask
 import com.example.wifidirectchatapp.my_socket_library.async_task.SocketConnectAsyncTask
 import com.example.wifidirectchatapp.my_socket_library.async_task.WriteAsyncTask
@@ -28,10 +29,11 @@ abstract class SingleSocket {
     fun createSocket(port: Int) {
         socket = Socket()
         try {
-            socket!!.bind(InetSocketAddress(port))
+            socket?.bind(InetSocketAddress(port))
         } catch (e: IOException) {
             e.printStackTrace()
         }
+
     }
 
     fun startReadingStream() {

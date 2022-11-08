@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.wifidirectchatapp.R
 import com.example.wifidirectchatapp.broadcast_receiver.WifiP2pReceiver
+import com.example.wifidirectchatapp.socket.Server
 
 @Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
@@ -215,6 +216,8 @@ class MainActivity : AppCompatActivity() {
             connectionStateTv.text = "CLIENT"
             bundle.putString(ChatActivity.SOCKET_MODE_EXTRA,ChatActivity.CLIENT_SOCKET_MODE)
         }
+
+        Log.d(TAG,"My ip: ${Server.ipAddress}")
 
         val ip : String = groupOwnerAddress.hostAddress as String
         if (ip.isNotEmpty()) {
