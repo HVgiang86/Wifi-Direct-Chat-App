@@ -25,10 +25,6 @@ class Server private constructor() {
         val INSTANCE = Server()
     }
 
-    fun hasClientConnected(): Boolean {
-        return hasClientConnected
-    }
-
     fun onDestroy() {
         val builder = MessagePacketBuilder()
         builder.setEvent(IO.CLIENT_DISCONNECT)

@@ -18,73 +18,95 @@ import androidx.core.app.ActivityCompat
 import com.example.wifidirectchatapp.R
 import com.example.wifidirectchatapp.broadcast_receiver.WifiP2pReceiver
 import com.example.wifidirectchatapp.socket.Server
+import kotlinx.android.synthetic.main.activity_main.*
+import android.net.wifi.p2p.WifiP2pGroup
+
+import android.net.wifi.p2p.WifiP2pManager.GroupInfoListener
+
+
+
 
 @Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
-    private val PERMISSION_REQUEST_CODE = 1000
+    companion object {
+        private const val PERMISSION_REQUEST_CODE = 1000
+        private const val TAG = "P2P TAG"
+    }
 
     private lateinit var manager: WifiP2pManager
     private lateinit var channel: WifiP2pManager.Channel
-
     private lateinit var wifiManager: WifiManager
-    private lateinit var wifiToggleBtn: Button
-    private lateinit var peerDiscoveryBtn: Button
-    lateinit var connectionStateTv: TextView
-    private lateinit var peersListView: ListView
 
-    private lateinit var receiver: WifiP2pReceiver
-
-    private val TAG = "P2P TAG"
+    private lateinit var wifiP2pReceiver: WifiP2pReceiver
 
     private lateinit var peers: MutableList<WifiP2pDevice>
-    private var deviceName = Array(5) { "" }
+    private var deviceName = Array(10) { "" }
     private lateinit var adapter: ArrayAdapter<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        wifiToggleBtn = findViewById(R.id.wifi_toggle_btn)
-        peerDiscoveryBtn = findViewById(R.id.device_discovery_btn)
-        connectionStateTv = findViewById(R.id.connection_status_tv)
-        peersListView = findViewById(R.id.device_list)
-
         wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-
-        if (wifiManager.isWifiEnabled) {
-            Log.d(TAG, "Wifi enabled!")
-            connectionStateTv.text = getString(R.string.connected)
-            wifiToggleBtn.text = getString(R.string.turn_wifi_off)
-        } else {
-            Log.d(TAG, "Wifi disabled!")
-            connectionStateTv.text = getString(R.string.disconnected)
-            wifiToggleBtn.text = getString(R.string.turn_wifi_on)
-        }
-
-        wifiToggleBtn.setOnClickListener { changeWifiState() }
-        peerDiscoveryBtn.setOnClickListener { startPeersDiscovery() }
-
         manager = getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
         channel = manager.initialize(this, mainLooper, null)
-        receiver = WifiP2pReceiver(manager, channel, this)
+        wifiP2pReceiver = WifiP2pReceiver(manager, channel, this)
         registryBroadcastReceiver()
 
-        peers = mutableListOf()
+        initialTextForWifiToggleButton()
 
+        wifi_toggle_btn.setOnClickListener { changeWifiState() }
+        device_discovery_btn.setOnClickListener { startPeersDiscovery() }
+
+        //display peers list
+        peers = mutableListOf()
         adapter = ArrayAdapter(
             applicationContext, android.R.layout.simple_list_item_1, deviceName
         )
-        peersListView.adapter = adapter
-        peersListView.onItemClickListener = onItemClickListener
+        device_list.adapter = adapter
+        device_list.onItemClickListener = onItemClickListener
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        baseContext.unregisterReceiver(wifiP2pReceiver)
+        manager.stopPeerDiscovery(channel, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                //stop discovery started successfully
+                Log.d(TAG,"Peers Discovery Stopped successfully!")
+            }
+
+            override fun onFailure(p0: Int) {
+                //stop discovery not started
+                Log.d(TAG,"Peers Discovery not stopped!")
+            }
+        })
+    }
+
+    /**
+     * This function used to initial first text for wifi toggle button
+     * if wifi is enabled then set the button text to "turn wifi off"
+     * opposite, set the button text to "turn wifi on"
+     */
+    private fun initialTextForWifiToggleButton() {
+        if (wifiManager.isWifiEnabled) {
+            Log.d(TAG, "Wifi enabled!")
+            connection_status_tv.text = getString(R.string.connected)
+            wifi_toggle_btn.text = getString(R.string.turn_wifi_off)
+        } else {
+            Log.d(TAG, "Wifi disabled!")
+            connection_status_tv.text = getString(R.string.disconnected)
+            wifi_toggle_btn.text = getString(R.string.turn_wifi_on)
+        }
     }
 
     private fun changeWifiState() {
-        if (wifiToggleBtn.text.equals(getString(R.string.turn_wifi_off))) {
+        if (wifi_toggle_btn.text.equals(getString(R.string.turn_wifi_off))) {
             wifiManager.isWifiEnabled = false
-            wifiToggleBtn.text = getString(R.string.turn_wifi_on)
+            wifi_toggle_btn.text = getString(R.string.turn_wifi_on)
         } else {
             wifiManager.isWifiEnabled = true
-            wifiToggleBtn.text = getString(R.string.turn_wifi_off)
+            wifi_toggle_btn.text = getString(R.string.turn_wifi_off)
         }
     }
 
@@ -112,27 +134,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        baseContext.unregisterReceiver(receiver)
-        manager.stopPeerDiscovery(channel, object : WifiP2pManager.ActionListener {
-            override fun onSuccess() {
-                //discovery started successfully
-            }
-
-            override fun onFailure(p0: Int) {
-                //discovery not started
-            }
-        })
-    }
-
     private fun registryBroadcastReceiver() {
         val intentFilter = IntentFilter()
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
-        baseContext.registerReceiver(receiver, intentFilter)
+        baseContext.registerReceiver(wifiP2pReceiver, intentFilter)
     }
 
     @SuppressLint("MissingPermission")
@@ -141,15 +149,66 @@ class MainActivity : AppCompatActivity() {
         manager.discoverPeers(channel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 //discovery started successfully
-                connectionStateTv.text = "Peers discovery started!"
+                connection_status_tv.text = getString(R.string.peers_discovery_started)
             }
 
             override fun onFailure(p0: Int) {
                 //discovery not started
-                connectionStateTv.text =
-                    "Peers discovery starting failed, pls check the connection!"
+                connection_status_tv.text =
+                    getString(R.string.peers_discovery_fail_notification)
             }
         })
+    }
+
+
+    @SuppressLint("MissingPermission")
+    val onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+        val device = peers[position]
+        val config = WifiP2pConfig()
+        config.deviceAddress = device.deviceAddress
+        manager.connect(channel, config, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                Toast.makeText(
+                    applicationContext, "Connected to " + device.deviceName, Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            override fun onFailure(p0: Int) {
+                Toast.makeText(applicationContext, "not connected!", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
+    val connectionInfoListener = WifiP2pManager.ConnectionInfoListener { wifiP2pInfo ->
+        Log.d(TAG, "Connection Info Listener")
+        val groupOwnerAddress = wifiP2pInfo.groupOwnerAddress
+
+        val intent = Intent(this, ChatActivity::class.java)
+        val bundle = Bundle()
+
+        val isHost: Boolean = (wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner)
+
+        if (isHost) {
+            connection_status_tv.text = getString(R.string.host)
+            bundle.putString(ChatActivity.SOCKET_MODE_EXTRA, ChatActivity.SERVER_SOCKET_MODE)
+        } else {
+            connection_status_tv.text = getString(R.string.client)
+            bundle.putString(ChatActivity.SOCKET_MODE_EXTRA, ChatActivity.CLIENT_SOCKET_MODE)
+        }
+
+        Log.d(TAG, "My ip: ${Server.ipAddress}")
+
+        val ip: String = groupOwnerAddress.hostAddress as String
+        if (ip.isNotEmpty()) {
+            Log.d(TAG, "Group owner address: ${groupOwnerAddress.hostAddress}")
+            bundle.putString(ChatActivity.IP_SOCKET_EXTRA, ip)
+        }
+
+        peers.clear()
+        adapter.notifyDataSetChanged()
+
+        intent.putExtra(ChatActivity.BUNDLE_KEY, bundle)
+        startActivity(intent)
     }
 
     val peerListListener = WifiP2pManager.PeerListListener { p0 ->
@@ -177,55 +236,5 @@ class MainActivity : AppCompatActivity() {
 
             }
         }
-    }
-
-    @SuppressLint("MissingPermission")
-    val onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
-        val device = peers[position]
-        val config = WifiP2pConfig()
-        config.deviceAddress = device.deviceAddress
-        manager.connect(channel, config, object : WifiP2pManager.ActionListener {
-            override fun onSuccess() {
-                Toast.makeText(
-                    applicationContext,
-                    "Connected to " + device.deviceName,
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-
-            override fun onFailure(p0: Int) {
-                Toast.makeText(applicationContext, "not connected!", Toast.LENGTH_SHORT).show()
-            }
-        })
-    }
-
-    val connectionInfoListener = WifiP2pManager.ConnectionInfoListener { wifiP2pInfo ->
-        Log.d(TAG, "Connection Info Listener")
-        val groupOwnerAddress = wifiP2pInfo.groupOwnerAddress
-
-        val intent = Intent(this, ChatActivity::class.java)
-        val bundle = Bundle()
-
-        val isHost: Boolean = (wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner)
-
-        if (isHost) {
-            connectionStateTv.text = "HOST"
-            bundle.putString(ChatActivity.SOCKET_MODE_EXTRA,ChatActivity.SERVER_SOCKET_MODE)
-        }
-        else {
-            connectionStateTv.text = "CLIENT"
-            bundle.putString(ChatActivity.SOCKET_MODE_EXTRA,ChatActivity.CLIENT_SOCKET_MODE)
-        }
-
-        Log.d(TAG,"My ip: ${Server.ipAddress}")
-
-        val ip : String = groupOwnerAddress.hostAddress as String
-        if (ip.isNotEmpty()) {
-            Log.d(TAG, "Group owner address: ${groupOwnerAddress.hostAddress}")
-            bundle.putString(ChatActivity.IP_SOCKET_EXTRA,ip)
-        }
-
-        intent.putExtra(ChatActivity.BUNDLE_KEY,bundle)
-        startActivity(intent)
     }
 }

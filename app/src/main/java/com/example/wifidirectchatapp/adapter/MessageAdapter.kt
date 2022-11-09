@@ -4,14 +4,9 @@ import android.content.Context
 import androidx.recyclerview.widget.RecyclerView
 import android.view.ViewGroup
 import android.view.LayoutInflater
-import com.example.wifidirectchatapp.adapter.MessageAdapter
 import com.example.wifidirectchatapp.R
-import android.webkit.MimeTypeMap
-import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import android.widget.TextView
 import com.example.wifidirectchatapp.model.Message
 import com.example.wifidirectchatapp.utilities.FileOpener
@@ -21,20 +16,24 @@ class MessageAdapter(private val messageList: List<Message>, private val context
     RecyclerView.Adapter<MessageAdapter.ViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val v: View
-        v = if (viewType == SERVER_MESSAGE_TYPE) inflater.inflate(
-            R.layout.server_message_item,
-            parent,
-            false
-        ) else if (viewType == CLIENT_MESSAGE_TYPE) inflater.inflate(
-            R.layout.client_message_item,
-            parent,
-            false
-        ) else if (viewType == SERVER_FILE_TYPE) inflater.inflate(
-            R.layout.server_file_item,
-            parent,
-            false
-        ) else inflater.inflate(R.layout.client_file_item, parent, false)
+        val v: View = when (viewType) {
+            SERVER_MESSAGE_TYPE -> inflater.inflate(
+                R.layout.server_message_item,
+                parent,
+                false
+            )
+            CLIENT_MESSAGE_TYPE -> inflater.inflate(
+                R.layout.client_message_item,
+                parent,
+                false
+            )
+            SERVER_FILE_TYPE -> inflater.inflate(
+                R.layout.server_file_item,
+                parent,
+                false
+            )
+            else -> inflater.inflate(R.layout.client_file_item, parent, false)
+        }
         return ViewHolder(v)
     }
 
@@ -48,7 +47,7 @@ class MessageAdapter(private val messageList: List<Message>, private val context
             val i = content?.lastIndexOf("/")
             val filename = content?.substring(i!! + 1)
             holder.contentTv.text = filename
-            holder.contentTv.setOnClickListener { v: View? ->
+            holder.contentTv.setOnClickListener {
                 showFileChooser(content.toString())
                 Log.d("Adapter log", "FILE CLICKED!")
             }

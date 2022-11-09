@@ -3,7 +3,6 @@
 package com.example.wifidirectchatapp.my_socket_library
 
 import android.os.AsyncTask
-import android.util.Log
 import com.example.wifidirectchatapp.my_socket_library.async_task.ReadAsyncTask
 import com.example.wifidirectchatapp.my_socket_library.async_task.SocketConnectAsyncTask
 import com.example.wifidirectchatapp.my_socket_library.async_task.WriteAsyncTask
@@ -23,7 +22,6 @@ abstract class SingleSocket {
 
 
     @JvmField
-    var onConnectListener: IO.OnConnectListener? = null
     var onDisconnectListener: IO.OnDisconnectListener? = null
     var newMessageListener: IO.OnNewMessageListener? = null
     fun createSocket(port: Int) {

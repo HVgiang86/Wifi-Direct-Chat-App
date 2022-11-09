@@ -15,7 +15,7 @@ class OnNewMessageListener : IO.OnNewMessageListener {
             saveFileFromStream(MessagePacket)
         } else {
             if (MessagePacket.event.equals(IO.SEND_MESSAGE, ignoreCase = true)) {
-                val message = Message(MessagePacket.message, false, false)
+                val message = Message(MessagePacket.message, isServer = false, isFile = false)
                 MessageManager.getInstance().addMessage(message)
             } else {
                 socket?.onDisconnectListener?.onDisconnect(socket)
@@ -38,7 +38,7 @@ class OnNewMessageListener : IO.OnNewMessageListener {
             val bos = BufferedOutputStream(fos)
             bos.write(bytes)
             bos.close()
-            val msg = Message(file.path, false, true)
+            val msg = Message(file.path, isServer = false, isFile = true)
             MessageManager.getInstance().addMessage(msg)
         } catch (e: FileNotFoundException) {
             e.printStackTrace()

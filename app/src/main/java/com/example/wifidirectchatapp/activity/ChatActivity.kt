@@ -1,20 +1,18 @@
 package com.example.wifidirectchatapp.activity
 
+import android.annotation.SuppressLint
 import android.annotation.TargetApi
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
+import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.RecyclerView
 import com.example.wifidirectchatapp.R
 import com.example.wifidirectchatapp.adapter.MessageAdapter
 import com.example.wifidirectchatapp.model.Message
@@ -23,10 +21,12 @@ import com.example.wifidirectchatapp.socket.Client
 import com.example.wifidirectchatapp.socket.OnNewMessageListener
 import com.example.wifidirectchatapp.socket.Server
 import com.example.wifidirectchatapp.utilities.FilePathGetter
+import kotlinx.android.synthetic.main.activity_chat.*
 import java.io.File
 
 
 class ChatActivity : AppCompatActivity() {
+    //Constant Value used to be KEY and MARK_VALUE
     companion object {
         const val CLIENT_SOCKET_MODE = "CLIENT_SOCKET_MODE"
         const val SERVER_SOCKET_MODE = "SERVER_SOCKET_MODE"
@@ -35,18 +35,15 @@ class ChatActivity : AppCompatActivity() {
         const val BUNDLE_KEY = "SOCKET_INFO_BUNDLE_KEY"
         const val SOCKET_PORT = 5000
         const val TAG = "CHAT ACTIVITY LOG"
-        const val MAX_FILE_SIZE = 50*1024*1024
+        const val MAX_FILE_SIZE = 50 * 1024 * 1024
     }
 
-    private lateinit var ip: String
-    private lateinit var socketModeTv: TextView
-    private lateinit var messageEdt: EditText
-    private lateinit var recyclerView: RecyclerView
+    private lateinit var socketIp: String
     private lateinit var messageManager: MessageManager
-    private lateinit var attachFileBtn: ImageButton
-    private lateinit var sendMessageBtn: Button
-
     private var isServer: Boolean = false
+
+    private lateinit var mManager: WifiP2pManager
+    private lateinit var mChannel: WifiP2pManager.Channel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,70 +54,98 @@ class ChatActivity : AppCompatActivity() {
             askPermissions()
         }
 
-        socketModeTv = findViewById(R.id.socket_mode_tv)
-        messageEdt = findViewById(R.id.message_edt)
-        recyclerView = findViewById(R.id.recycler_view)
-        attachFileBtn = findViewById(R.id.attach_file_btn)
-        sendMessageBtn = findViewById(R.id.send_message_btn)
         messageManager = MessageManager.getInstance()
+        mManager = getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
+        mChannel = mManager.initialize(this, mainLooper,null)
 
+        //get socket mode, host's ip from activity's launch intent
         val bundle = intent.getBundleExtra(BUNDLE_KEY)
         if (bundle != null) {
-            ip = bundle.getString(IP_SOCKET_EXTRA, "")
+            socketIp = bundle.getString(IP_SOCKET_EXTRA, "")
             val socketModeStr = bundle.getString(SOCKET_MODE_EXTRA, "fail")
-            socketModeTv.text = socketModeStr
+            socket_mode_tv.text = socketModeStr
             isServer = socketModeStr.equals(SERVER_SOCKET_MODE)
         }
-        Log.d(TAG, "IP: ${ip}; Socket mode: ${socketModeTv.text}")
+        Log.d(TAG, "IP: ${socketIp}; Socket mode: ${socket_mode_tv.text}")
 
-        attachFileBtn.setOnClickListener { chooseFile() }
-        sendMessageBtn.setOnClickListener { sendMessage() }
+        attach_file_btn.setOnClickListener { chooseFile() }
+        send_message_btn.setOnClickListener { sendMessage() }
 
         if (isServer)
             createServerSocket()
         else
-            openClientSocket()
+            connectClientToSocketServer()
 
-        displayMessageList()
-
+        initDisplayingMessageList()
     }
 
-    private fun openClientSocket() {
-        Log.d(TAG, "Connecting to socket server: ip: ${ip}; port: $SOCKET_PORT")
+    override fun onDestroy() {
+        if (isServer)
+            Server.getInstance().onDestroy()
+        else
+            Client.getInstance().socket.onDestroy()
+        disconnectWifiDirect()
+        super.onDestroy()
+    }
+
+    @SuppressLint("MissingPermission")
+    fun disconnectWifiDirect() {
+        mManager.requestGroupInfo(mChannel
+        ) { group ->
+            if (group != null) {
+                mManager.removeGroup(mChannel, object : WifiP2pManager.ActionListener {
+                    override fun onSuccess() {
+                        Log.d(TAG, "removeGroup onSuccess -")
+                    }
+
+                    override fun onFailure(reason: Int) {
+                        Log.d(TAG, "removeGroup onFailure -$reason")
+                    }
+                })
+            }
+        }
+    }
+
+    private fun connectClientToSocketServer() {
+        Log.d(TAG, "Connecting to socket server: ip: ${socketIp}; port: $SOCKET_PORT")
         val socket = Client.getInstance().socket
         socket.createSocket(SOCKET_PORT)
-        socket.connectSocket(ip, SOCKET_PORT.toString())
+        socket.connectSocket(socketIp, SOCKET_PORT.toString())
 
         socket.newMessageListener = OnNewMessageListener()
     }
 
-    private fun createServerSocket(){
+    private fun createServerSocket() {
         Server.getInstance().createServer(SOCKET_PORT)
     }
 
-    private fun displayMessageList() {
+    /**
+     * This function used to display list of message.
+     * Messages get from Message Manager's list
+     */
+    private fun initDisplayingMessageList() {
         messageManager = MessageManager.getInstance()
         val messageList = messageManager.getMessageList()
         val messageAdapter = MessageAdapter(messageList, this)
 
         messageManager.setActivity(this)
-        recyclerView.adapter = messageAdapter
-        messageManager.setRv(recyclerView)
+        recycler_view.adapter = messageAdapter
+        messageManager.setRv(recycler_view)
         messageManager.setAdapter(messageAdapter)
 
     }
 
     private fun sendMessage() {
-        val s = messageEdt.text.toString().trim()
-        if (s.isEmpty()) return
+        val messageContent = message_edt.text.toString().trim()
+        if (messageContent.isEmpty()) return
 
-        if(isServer)
-            Server.getInstance().connectedSocket?.emitMessage(s)
+        if (isServer)
+            Server.getInstance().connectedSocket?.emitMessage(messageContent)
         else
-            Client.getInstance().socket.emitMessage(s)
+            Client.getInstance().socket.emitMessage(messageContent)
 
-        messageManager.addMessage(Message(s, isServer = true, isFile = false))
-        messageEdt.setText("")
+        messageManager.addMessage(Message(messageContent, isServer = true, isFile = false))
+        message_edt.setText("")
     }
 
     private fun chooseFile() {
@@ -168,7 +193,7 @@ class ChatActivity : AppCompatActivity() {
             if (isServer)
                 Server.getInstance().connectedSocket?.emitFile(filePath, filename)
             else
-                Client.getInstance().socket.emitFile(filePath,filename)
+                Client.getInstance().socket.emitFile(filePath, filename)
 
             messageManager.addMessage(Message(filePath, isServer = true, isFile = true))
         }
@@ -179,19 +204,14 @@ class ChatActivity : AppCompatActivity() {
         builder.create().show()
     }
 
-    override fun onDestroy() {
-        if(isServer)
-            Server.getInstance().onDestroy()
-        else
-            Client.getInstance().socket.onDestroy()
-        super.onDestroy()
-    }
-
     //request external memory permission
     private fun shouldAskPermissions(): Boolean {
         return (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1)
     }
 
+    /**
+     * This function request for important permissions, if user accept, application will work correctly
+     */
     @TargetApi(23)
     private fun askPermissions() {
         val permissions = arrayOf(

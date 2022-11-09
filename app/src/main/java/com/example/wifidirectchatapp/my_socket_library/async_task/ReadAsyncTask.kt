@@ -1,5 +1,11 @@
-@file:Suppress("DEPRECATION")
+/**
+ * This class is an Async Task that has responsibility to transfer data to Socket
+ * @author Hoang Giang
+ * @constructor a SingleSocket object is param for constructor, that's socket we will use
+ */
 
+
+@file:Suppress("DEPRECATION")
 package com.example.wifidirectchatapp.my_socket_library.async_task
 
 import android.os.AsyncTask
@@ -7,10 +13,8 @@ import android.util.Log
 import com.example.wifidirectchatapp.my_socket_library.IO
 import com.example.wifidirectchatapp.my_socket_library.SingleSocket
 import com.example.wifidirectchatapp.my_socket_library.model.MessagePacketBuilder
-import java.io.BufferedReader
 import java.io.DataInputStream
 import java.io.IOException
-import java.io.InputStreamReader
 
 class ReadAsyncTask(private val socket: SingleSocket) : AsyncTask<Void?, Void?, Void?>() {
     companion object {
@@ -28,7 +32,6 @@ class ReadAsyncTask(private val socket: SingleSocket) : AsyncTask<Void?, Void?, 
             while (true) {
                 val `is` = socket.socket?.getInputStream()
                 val dis = DataInputStream(`is`)
-                val br = BufferedReader(InputStreamReader(`is`))
                 Log.d(TAG, "Read Async Task Running")
                 Log.d(TAG, "New Data")
                 val builder = MessagePacketBuilder()

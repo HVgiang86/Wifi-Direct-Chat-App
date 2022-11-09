@@ -7,6 +7,11 @@ import java.io.File
 import java.io.FileNotFoundException
 
 class MySocket : SingleSocket() {
+
+    /**
+     * This function used to emit an Message to socket's stream
+     * @param message is the message that need to send
+     */
     fun emitMessage(message: String?) {
         val builder = MessagePacketBuilder()
         builder.setEvent(IO.SEND_MESSAGE)
@@ -15,6 +20,12 @@ class MySocket : SingleSocket() {
         emit(builder.build())
     }
 
+    /**
+     * This function used to emit an File to socket's stream
+     * @param filePath is the filepath used to browse to that file
+     * @param filename is the filename, it will be transfer as message content, it's help receiver know filename
+     * @return void
+     */
     fun emitFile(filePath: String?, filename: String?) {
         val file = File(filePath.toString())
         val builder = MessagePacketBuilder()

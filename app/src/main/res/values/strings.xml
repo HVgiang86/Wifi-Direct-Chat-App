@@ -16,4 +16,8 @@
     <string name="default_ip">192.168.0.138</string>
     <string name="username">username</string>
     <string name="server_address">Server Address</string>
+    <string name="peers_discovery_started">Peers discovery started!</string>
+    <string name="peers_discovery_fail_notification">Peers discovery starting failed, pls check the connection!</string>
+    <string name="host">HOST</string>
+    <string name="client">CLIENT</string>
 </resources>
